@@ -32,7 +32,7 @@ export class SpawnManager {
   }
 
   update() {
-    console.log("SpawnManager 队列：", this.queue.map((creepConfig) => creepConfig.role).join(","));
+    // console.log("SpawnManager 队列：", this.queue.map((creepConfig) => creepConfig.role).join(","));
     if (this.spawn.spawning) {
       // 如果当前正在生成Creep，则不执行任何操作
       return;

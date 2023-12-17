@@ -19,9 +19,15 @@ export class AttackerBehavior extends SoldierBehavior {
 
   // 攻击目标逻辑
   attackTarget(target) {
-    // const distance = this.creep.getRangeTo(target);
     // 最近的敌人
     const closestEnemy = this.creep.findClosestByRange(this.battleController.enemies);
+
+    if (!closestEnemy) {
+      this.healSelf();
+      this.rangeHeal();
+      return;
+    }
+
     // 最近的敌人距离
     const closestEnemyDistance = this.creep.getRangeTo(closestEnemy);
     // 最近的敌人是否是目标
@@ -33,8 +39,6 @@ export class AttackerBehavior extends SoldierBehavior {
     if (!closestEnemyIsTarget && closestEnemyIsInAttackRange) {
       target = closestEnemy;
     }
-
-    let needHeal = false;
 
     const attackResult = this.creep.attack(target);
     switch (attackResult) {
@@ -52,7 +56,6 @@ export class AttackerBehavior extends SoldierBehavior {
         break;
       default:
         console.log("attackTarget", this.creep.memory.name, "攻击异常", attackResult);
-        needHeal = true;
         break;
     }
   }

@@ -4,11 +4,12 @@ import { getObjectsByPrototype, getTicks } from "game/utils";
 import { CreepBehavior } from "../behaviors/CreepBehavior.mjs";
 import { SpawnManager } from "./SpawnManager.mjs";
 import { CREEP_ROLE, CREEP_STATE } from "../constants.mjs";
-import { NEED_WORKER_COUNT } from "../config.mjs";
+import { REQUIRED_SOLDIERS_COUNT, NEED_WORKER_COUNT } from "../config.mjs";
 import { Position } from "../utils/Position.mjs";
 import { AttackerBehavior } from "../behaviors/AttackerBehavior.mjs";
 import { HarvesterBehavior } from "../behaviors/HarvesterBehavior.mjs";
 import { RangedAttackerBehavior } from "../behaviors/RangedAttackerBehavior.mjs";
+import { VisualController } from "./VisualController.mjs";
 
 /**
  * 战斗控制器
@@ -17,10 +18,15 @@ export class BattleController {
   constructor() {
     this.mainSpawn = this.getMainSpawn();
     this.enemySpawn = this.getEnemieSpawns();
-    this.spawnManager = new SpawnManager(this.mainSpawn);
     // 设置集结点
     this.rallyPoint = this.determineRallyPoint();
+
+    // 设置全局数据
     this.setGlobalData();
+
+    // 挂载其他控制器
+    this.spawnManager = new SpawnManager(this.mainSpawn);
+    this.visualController = new VisualController();
   }
 
   /**
@@ -44,6 +50,7 @@ export class BattleController {
     this.assignCreepBehavior();
     // 更新 SpawnManager
     this.spawnManager.update();
+    this.visualController.draw();
   }
 
   /**
@@ -75,6 +82,10 @@ export class BattleController {
           creep.memory.role === CREEP_ROLE.RANGED_ATTACKER)
     );
 
+    if (mySoldiers.length > 0) {
+      console.log("无组队士兵", mySoldiers.map((creep) => creep.id).join(","));
+    }
+
     // 按照兵种分组
     const soldiersAtRallyPoint = {};
     mySoldiers.forEach((creep) => {
@@ -86,16 +97,19 @@ export class BattleController {
 
     // 准备状态
     [CREEP_ROLE.RANGED_ATTACKER, CREEP_ROLE.ATTACKER].forEach((role) => {
-      const requiredSoldiers = 4; // 需要的士兵数量
+      const requiredSoldiers = REQUIRED_SOLDIERS_COUNT; // 需要的士兵数量
       const spawningCount = this.spawnManager.getQueueCountByRole(role);
-      const currentCount = soldiersAtRallyPoint[role]?.length || 0;
+      const soldiers = soldiersAtRallyPoint[role] || [];
+      const currentCount = soldiers.length;
       const readyToAttack = currentCount >= requiredSoldiers;
 
       if (readyToAttack) {
-        soldiersAtRallyPoint[role].forEach((creep) => {
+        // 如果准备好了，就把士兵分配到一个组里
+        soldiers.forEach((creep) => {
           creep.memory.groupId = `${role}-${getTicks()}`;
           creep.memory.state = CREEP_STATE.ATTACKING;
         });
+        console.log(`${role} 准备好了，分配到了 ${soldiers[0].memory.groupId}`);
       } else {
         if (spawningCount + currentCount < requiredSoldiers) {
           this.spawnManager.enqueue({
@@ -149,7 +163,7 @@ export class BattleController {
   spawnWorkers() {
     const workerConfig = {
       role: CREEP_ROLE.HARVESTER,
-      level: getTicks() < 1000 ? 1 : 3,
+      level: getTicks() < 1000 ? 1 : 2,
     };
     const count = this.getAllCreepsCountByRole(workerConfig.role);
     if (count < NEED_WORKER_COUNT) {

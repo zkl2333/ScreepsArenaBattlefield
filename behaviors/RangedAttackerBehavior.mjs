@@ -1,4 +1,4 @@
-import { ERR_NOT_IN_RANGE, ERR_NO_BODYPART, OK } from "game/constants";
+import { ERR_INVALID_TARGET, ERR_NOT_IN_RANGE, ERR_NO_BODYPART, OK } from "game/constants";
 import { SoldierBehavior } from "./SoldierBehavior.mjs";
 import { getDirection } from "game/utils";
 
@@ -27,6 +27,9 @@ export class RangedAttackerBehavior extends SoldierBehavior {
         break;
       case ERR_NO_BODYPART:
         this.creep.moveTo(this.battleController.rallyPoint);
+        break;
+      case ERR_INVALID_TARGET:
+        console.log("attackTarget", this.creep.memory.name, "目标无效", target);
         break;
       default:
         console.log("attackTarget", this.creep.memory.name, "攻击异常", attackResult);

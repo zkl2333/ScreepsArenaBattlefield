@@ -67,4 +67,5 @@ export const bodyPartCosts = {
 export const CREEP_STATE = {
   GATHERING: "gathering",
   ATTACKING: "attacking",
+  GUARDING: "guarding",
 };
