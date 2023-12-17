@@ -32,16 +32,13 @@ export class SpawnManager {
   }
 
   update() {
+    console.log("SpawnManager 队列：", this.queue.map((creepConfig) => creepConfig.role).join(","));
     if (this.spawn.spawning) {
       // 如果当前正在生成Creep，则不执行任何操作
       return;
     }
 
     if (this.queue.length > 0) {
-      console.log(
-        "SpawnManager queue",
-        this.queue.map((creepConfig) => creepConfig.role).join(",")
-      );
       // 获取队列中的下一个Creep 并从队列中移除
       const nextCreep = this.queue.shift();
       this.spawnCreep(nextCreep);
@@ -83,9 +80,8 @@ export class SpawnManager {
       creep.memory = {
         role: creepConfig.role,
         level: creepConfig.level,
-        name: `${creepConfig.role}-${getTicks()}`,
+        // name: `${creepConfig.role}-${getTicks()}`,
       };
-      console.log(`SpawnManager.spawnCreep: 生成 ${creep.memory.name} 成功`);
     }
   }
 
@@ -93,8 +89,17 @@ export class SpawnManager {
    * 获取队列中指定角色的数量
    * @param {CREEP_ROLE_VALUE} creepRole
    */
-  getQueueCount(creepRole) {
+  getQueueCountByRole(creepRole) {
     return this.queue.filter((creepConfig) => creepConfig.role === creepRole).length;
+  }
+
+  /**
+   * 队列总花费
+   */
+  getQueueCost() {
+    return this.queue.reduce((cost, creepConfig) => {
+      return cost + this.calculateCreepCost(creepConfig);
+    }, 0);
   }
 
   /**
